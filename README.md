@@ -1,2 +1,5 @@
-# repos2
-create respository first in github web 
+# FileTransferToolyy
+
+File Transfer Tool created by Zyy.
+
+ 
