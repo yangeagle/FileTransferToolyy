@@ -16,18 +16,32 @@
 
 int clients[MAX_CLIENTS_NUM];
 
+int add_new_fd(int fd)
+{
+    if (fd < 0)
+    {
+        return -1;
+    }
+
+    int i = 0;
+
+    for(i = 0; i < MAX_CLIENTS_NUM; ++i)
+    {
+        if (-1 == clients[i])
+        {
+            clients[i] = fd;
+            return 0;
+        }
+    }
+
+    return -1;
+}
+
 
 void set_fds(fd_set *preadset, int *pmax_fd)
 {
     *pmax_fd = -1;
     FD_ZERO(preadset);
-
-    if (sock_fd >= 0)
-    {
-        FD_SET(sock_fd, preadset);
-        *pmax_fd = sock_fd;
-    }
-
 
     for (i = 0; i < MAX_CLIENTS_NUM; i++) {
         if (clients[i] >= 0) {
@@ -47,7 +61,7 @@ int main(int argc, char *arg[])
     int i, nready, max_fd;
     int quit_flag = 0;
 
-    for (i = 0;i < MAX_CLIENTS_NUM; i++) {
+    for (i = 0; i < MAX_CLIENTS_NUM; i++) {
         clients[i] = -1;
     }
 
@@ -60,14 +74,16 @@ int main(int argc, char *arg[])
 
     while (!quit_flag) {
 
+        set_fds(&readset, &max_fd);
 
-        //开始监听描述符，是异步的，不会阻塞
-        ready = select(max_fd+1, &readset, NULL, NULL, NULL);
+        nready = select(max_fd+1, &readset, NULL, NULL, NULL);
+        if (nready < 0)
+        {
+
+        }
 
 
-
-    close(sock_fd);
-    return 0;
+    exit(EXIT_SUCCESS);
 }
 
 void process_request(fd_set *fdset)
