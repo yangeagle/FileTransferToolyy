@@ -11,16 +11,17 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "log.h"
 
 #define MAX_LISTEN 5
 #define SERVER_PORT (2618)
 
 
-int confg_socket_create()
+int config_server_socket()
 {
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd < 0) {
-        perror("create socket failed");
+        LOG_MESG(EERROR, "create socket failed.\n");
         return -1;
     }
 
@@ -31,12 +32,12 @@ int confg_socket_create()
     addr_serv.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(sock_fd, (struct sockaddr *)&addr_serv, sizeof(struct sockaddr_in)) < 0) {
-        perror("bind failed");
+        LOG_MESG(EERROR, "bind failed.\n");
         return -1;
     }
 
     if (listen(sock_fd, MAX_LISTEN) < 0) {
-        perror("listen failed");
+         LOG_MESG(EERROR, "listen failed\n");
         return -1;
     }
 

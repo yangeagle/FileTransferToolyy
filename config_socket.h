@@ -3,7 +3,7 @@
 
 
 
-int confg_socket_create();
+int config_server_socket();
 
 
 

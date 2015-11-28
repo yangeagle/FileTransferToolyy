@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#include <time.h>
 
 int log_flag = 0;
 static FILE *log_fp = NULL;
@@ -43,7 +44,7 @@ void log_print(char *fname, int lineno, int priority, char *fmt, ...)
     }
 
     struct timeval tv;
-    struct tm	time_tm = {0};
+    struct tm time_tm;
 
     gettimeofday(&tv, NULL);
 
