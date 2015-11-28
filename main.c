@@ -9,12 +9,63 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "config_socket.h"
+#include "log.h"
 
 #define MAX_CLIENTS_NUM (1000)
 
 int clients[MAX_CLIENTS_NUM];
+
+int quit_flag = 0;
+
+/* Handler for the SIGTERM signal (kill)
+ * SIGINT is also handled */
+static void
+sigterm(int sig)
+{
+    signal(sig, SIG_IGN);	/* Ignore this signal while we are quitting */
+
+    LOG_MESG(EGENERAL, "received signal %d, good-bye\n", sig);
+
+    quit_flag = 1;
+}
+
+
+void config_init(int argc, char *arg[])
+{
+    /*Set log flag*/
+    log_flag = 1;
+
+
+    struct sigaction sa;
+
+    /*set signal handler*/
+    memset(&sa, 0, sizeof(struct sigaction));
+    sa.sa_handler = sigterm;
+    if (sigaction(SIGTERM, &sa, NULL))
+    {
+        LOG_MESG(EGENERAL, "Failed to set %s handler. EXITING.\n", "SIGTERM");
+    }
+
+    if (sigaction(SIGINT, &sa, NULL))
+    {
+        LOG_MESG(EGENERAL, "Failed to set %s handler. EXITING.\n", "SIGINT");
+    }
+
+    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
+    {
+        LOG_MESG(EGENERAL, "Failed to set %s handler. EXITING.\n", "SIGPIPE");
+    }
+
+//    if (signal(SIGHUP, &sighup) == SIG_ERR)
+//    {
+//        LOG_MESG(EGENERAL, "Failed to set %s handler. EXITING.\n", "SIGHUP");
+//    }
+
+
+}
 
 int add_new_fd(int fd)
 {
@@ -40,6 +91,7 @@ int add_new_fd(int fd)
 
 void set_fds(fd_set *preadset, int *pmax_fd)
 {
+    int i = 0;
     *pmax_fd = -1;
     FD_ZERO(preadset);
 
@@ -59,18 +111,19 @@ void set_fds(fd_set *preadset, int *pmax_fd)
 int main(int argc, char *arg[])
 {
     int i, nready, max_fd;
-    int quit_flag = 0;
 
     for (i = 0; i < MAX_CLIENTS_NUM; i++) {
         clients[i] = -1;
     }
 
-    fd_set readset;
-    sock_fd = confg_socket_create();
+    config_init(argc, arg);
 
+    fd_set readset;
+    int sock_fd = confg_socket_create();
     max_fd = sock_fd;
 
-    printf("max fd num %d\n",FD_SETSIZE);
+    LOG_MESG(EGENERAL,"max fd num %d\n", FD_SETSIZE);
+    LOG_MESG(EGENERAL,"File transfer tool starting...");
 
     while (!quit_flag) {
 
@@ -79,24 +132,31 @@ int main(int argc, char *arg[])
         nready = select(max_fd+1, &readset, NULL, NULL, NULL);
         if (nready < 0)
         {
-
+            LOG_MESG(EGENERAL, "select error\n");
         }
 
 
+    }
+
     exit(EXIT_SUCCESS);
+    return 0;
 }
 
 void process_request(fd_set *fdset)
 {
-    if (FD_ISSET(listen_fd, &readset)) {
-        conn_fd = accept(sock_fd, (struct sockaddr *)&addr_client, &client_size);
+    char recv_buf[1024];
+    char send_buf[1024];
+    int send_num, recv_num;
+
+    if (FD_ISSET(listen_fd, fdset)) {
+        conn_fd = accept(listen_fd, (struct sockaddr *)&addr_client, &client_size);
         if (conn_fd < 0) {
             perror("accept failed");
             exit(1);
         }
 
-        FD_SET(conn_fd, &readset);
-        FD_CLR(sock_fd, &readset);
+        FD_SET(conn_fd, fdset);
+        FD_CLR(sock_fd, fdset);
 
         if (conn_fd > max_fd) {
             max_fd = conn_fd;
