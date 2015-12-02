@@ -6,6 +6,8 @@
 *
 */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,6 +18,9 @@
 #define MAX_LISTEN 5
 #define SERVER_PORT (2618)
 
+#define LOGFLAG "LOGFLAG"
+#define LOGDIR  "LOGDIR"
+#define ROOTDIR "ROOTDIR"
 
 int config_server_socket()
 {
@@ -43,3 +48,45 @@ int config_server_socket()
 
     return sock_fd;
 }
+
+
+void read_config_file()
+{
+    const char *optionfile = "/etc/fft.conf";
+    const char *logfile = "fft.log";
+
+    char buf[512] = {0};
+    char *strptr = NULL;
+
+    FILE *fp = NULL;
+    fp = fopen(optionfile, "r");
+    if (!fp)
+    {
+        LOG_MESG(EERROR, "Open option file failed.\n");
+    }
+
+    while(fgets(buf, sizeof(buf), fp))
+    {
+
+        if (!strstr(buf, LOGFLAG))
+        {
+
+        }
+        else if (!strstr(buf, LOGDIR))
+        {}
+        else if (!strstr(buf, ROOTDIR))
+        {
+
+        }
+        else
+        {
+            LOG_MESG(EWARN, "unkown config option.\n");
+        }
+    }
+
+
+
+}
+
+
+

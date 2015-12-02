@@ -37,11 +37,6 @@ sigterm(int sig)
 }
 
 
-void read_config_file()
-{
-
-}
-
 void config_init(int argc, char *arg[])
 {
     /*Set log flag*/
