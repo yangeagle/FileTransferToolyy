@@ -54,6 +54,7 @@ void read_config_file()
 {
     const char *optionfile = "/etc/fft.conf";
     const char *logfile = "fft.log";
+    char *ptr = NULL;
 
     char buf[512] = {0};
     char *strptr = NULL;
@@ -70,21 +71,48 @@ void read_config_file()
 
         if (!strstr(buf, LOGFLAG))
         {
+            ptr = strstr(buf, "=");
+            if (!ptr)
+            {
+                ptr += 1;
+                if (!strncmp(ptr, "TRUE", 4))
+                {
+                    log_flag = 1;
+                }
+                else if (!strncmp(ptr, "FALSE", 5))
+                {
+                    log_flag = 0;
+                }
+                else
+                {
+                    LOG_MESG(EWARN, "Invalid log flag option.\n");
+                }
+
+            }
+            else
+            {
+                LOG_MESG(EWARN, "Invalid log flag option.\n");
+            }
 
         }
         else if (!strstr(buf, LOGDIR))
-        {}
+        {
+            ptr = strstr(buf, "=");
+            if (!ptr)
+            {}
+        }
         else if (!strstr(buf, ROOTDIR))
         {
+            ptr = strstr(buf, "=");
+            if (!ptr)
+            {}
 
         }
         else
         {
-            LOG_MESG(EWARN, "unkown config option.\n");
+            LOG_MESG(EWARN, "Unkown config option.\n");
         }
     }
-
-
 
 }
 
