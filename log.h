@@ -11,6 +11,7 @@ typedef enum LOG_LEVEL_TAG
 
 
 extern int log_flag;
+extern FILE *log_fp;
 
 
 void log_print(char *fname, int lineno, int priority, char *fmt, ...);

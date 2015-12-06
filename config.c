@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include "log.h"
 
 #define MAX_LISTEN 5
@@ -68,26 +70,29 @@ void read_config_file()
 
     while(fgets(buf, sizeof(buf), fp))
     {
+        if ('#' == buf[0] || '\0' == buf[0])
+        {
+            continue;
+        }
 
-        if (!strstr(buf, LOGFLAG))
+        if (strstr(buf, LOGFLAG))
         {
             ptr = strstr(buf, "=");
             if (!ptr)
             {
-                ptr += 1;
-                if (!strncmp(ptr, "TRUE", 4))
-                {
-                    log_flag = 1;
-                }
-                else if (!strncmp(ptr, "FALSE", 5))
-                {
-                    log_flag = 0;
-                }
-                else
-                {
-                    LOG_MESG(EWARN, "Invalid log flag option.\n");
-                }
+                LOG_MESG(EWARN, "Invalid log flag option.\n");
+                continue;
+            }
 
+            ptr += 1;
+
+            if (!strncmp(ptr, "TRUE", 4))
+            {
+                log_flag = 1;
+            }
+            else if (!strncmp(ptr, "FALSE", 5))
+            {
+                log_flag = 0;
             }
             else
             {
@@ -95,22 +100,52 @@ void read_config_file()
             }
 
         }
-        else if (!strstr(buf, LOGDIR))
+        else if (strstr(buf, LOGDIR))
         {
             ptr = strstr(buf, "=");
             if (!ptr)
-            {}
-        }
-        else if (!strstr(buf, ROOTDIR))
-        {
-            ptr = strstr(buf, "=");
-            if (!ptr)
-            {}
+            {
+                LOG_MESG(EWARN, "Invalid log dir option.\n");
+                continue;
+            }
 
+            ptr += 1;
+            char log_path[512] = {0};
+
+            memcpy(log_path, ptr, strlen(ptr) + 1);
+
+            if (access(log_path, F_OK))
+            {
+                LOG_MESG(EWARN, "Log dir %s not exist!\n", log_path);
+                if (mkdir(log_path , 0755))
+                {
+                    LOG_MESG(EERROR, "Mkdir failed!\n");
+                }
+
+            }
+
+            log_fp = fopen(ptr, "w");
+            if (!log_fp)
+            {
+                LOG_MESG(EERROR, "Open log file failed!\n");
+            }
+
+        }
+        else if (strstr(buf, ROOTDIR))
+        {
+            ptr = strstr(buf, "=");
+            if (!ptr)
+            {
+                LOG_MESG(EWARN, "Invalid root dir option.\n");
+                continue;
+            }
+
+            ptr += 1;
         }
         else
         {
             LOG_MESG(EWARN, "Unkown config option.\n");
+            continue;
         }
     }
 

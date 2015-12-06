@@ -14,7 +14,7 @@
 #include <time.h>
 
 int log_flag = 0;
-static FILE *log_fp = NULL;
+FILE *log_fp = NULL;
 
 
 int log_init(char *logname)
