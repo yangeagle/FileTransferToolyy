@@ -13,7 +13,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-int log_flag = 0;
+int log_flag = 1;
 FILE *log_fp = NULL;
 
 

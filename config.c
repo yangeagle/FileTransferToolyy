@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include "log.h"
 
 #define MAX_LISTEN 5
@@ -54,7 +55,7 @@ int config_server_socket()
 
 void read_config_file()
 {
-    const char *optionfile = "/etc/fft.conf";
+    const char *optionfile = "/home/lanyang/work_zyy/FileTransferToolyy/fft.conf";
     const char *logfile = "fft.log";
     char *ptr = NULL;
 
@@ -74,6 +75,8 @@ void read_config_file()
         {
             continue;
         }
+
+        buf[strlen(buf) - 1] = '\0';
 
         if (strstr(buf, LOGFLAG))
         {
@@ -119,12 +122,14 @@ void read_config_file()
                 LOG_MESG(EWARN, "Log dir %s not exist!\n", log_path);
                 if (mkdir(log_path , 0755))
                 {
-                    LOG_MESG(EERROR, "Mkdir failed!\n");
+                    LOG_MESG(EERROR, "Mkdir failed:%s!\n", strerror(errno));
                 }
 
             }
 
-            log_fp = fopen(ptr, "w");
+            sprintf(log_path + strlen(log_path), "%s/", logfile);
+
+            log_fp = fopen(log_path, "w");
             if (!log_fp)
             {
                 LOG_MESG(EERROR, "Open log file failed!\n");

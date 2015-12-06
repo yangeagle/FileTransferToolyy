@@ -17,6 +17,7 @@
 
 #include "config_socket.h"
 #include "log.h"
+#include "config.h"
 
 #define MAX_CLIENTS_NUM (1000)
 
@@ -39,9 +40,6 @@ sigterm(int sig)
 
 void config_init(int argc, char *arg[])
 {
-    /*Set log flag*/
-    log_flag = 1;
-
 
     struct sigaction sa;
 
@@ -68,6 +66,8 @@ void config_init(int argc, char *arg[])
 //        LOG_MESG(EGENERAL, "Failed to set %s handler. EXITING.\n", "SIGHUP");
 //    }
 
+    /*read config from file*/
+    read_config_file();
 }
 
 
