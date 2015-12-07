@@ -71,12 +71,12 @@ void read_config_file()
 
     while(fgets(buf, sizeof(buf), fp))
     {
-        if ('#' == buf[0] || '\0' == buf[0])
+        if ('#' == buf[0] || '\0' == buf[0] || '\n' == buf[0])
         {
             continue;
         }
 
-        buf[strlen(buf) - 1] = '\0';
+        buf[strlen(buf) - 1] = '\0';//delete LF 0x0A '\n'
 
         if (strstr(buf, LOGFLAG))
         {
@@ -120,14 +120,19 @@ void read_config_file()
             if (access(log_path, F_OK))
             {
                 LOG_MESG(EWARN, "Log dir %s not exist!\n", log_path);
-                if (mkdir(log_path , 0755))
-                {
-                    LOG_MESG(EERROR, "Mkdir failed:%s!\n", strerror(errno));
-                }
+                char cmd[1024] = {0};
+                sprintf(cmd, "mkdir -p -m 0755 %s", log_path);
+
+                system(cmd);
+
+//                if (mkdir(log_path , 0755))
+//                {
+//                    LOG_MESG(EERROR, "Mkdir failed:%s!\n", strerror(errno));
+//                }
 
             }
 
-            sprintf(log_path + strlen(log_path), "%s/", logfile);
+            sprintf(log_path + strlen(log_path), "/%s", logfile);
 
             log_fp = fopen(log_path, "w");
             if (!log_fp)
@@ -146,6 +151,23 @@ void read_config_file()
             }
 
             ptr += 1;
+
+            char root_path[512] = {0};
+
+            memcpy(root_path, ptr, strlen(ptr) + 1);
+
+            if (access(root_path, F_OK))
+            {
+                LOG_MESG(EWARN, "root dir %s not exist!\n", root_path);
+                if (mkdir(root_path , 0755))
+                {
+                    LOG_MESG(EERROR, "Mkdir failed:%s!\n", strerror(errno));
+                }
+            }
+
+
+
+
         }
         else
         {

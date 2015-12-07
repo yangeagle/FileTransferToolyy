@@ -49,8 +49,8 @@ void log_print(char *fname, int lineno, int priority, char *fmt, ...)
     gettimeofday(&tv, NULL);
 
     localtime_r(&(tv.tv_sec), &time_tm); //get local time
-    fprintf (log_fp, "%d-%d-%d ", (1900 + time_tm.tm_year), (1 + time_tm.tm_mon), time_tm.tm_mday);
-    fprintf(log_fp, "%d:%d:%d %lu: [%s:%d] ", time_tm.tm_hour, time_tm.tm_min, time_tm.tm_sec, tv.tv_usec, fname, lineno);
+    fprintf (log_fp, "%d-%02d-%02d ", (1900 + time_tm.tm_year), (1 + time_tm.tm_mon), time_tm.tm_mday);
+    fprintf(log_fp, "%02d:%02d:%02d %lu: [%s:%d] ", time_tm.tm_hour, time_tm.tm_min, time_tm.tm_sec, tv.tv_usec, fname, lineno);
 
     va_list ap;
     va_start(ap, fmt);
