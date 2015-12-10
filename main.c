@@ -230,3 +230,9 @@ int  process_request(int listen_fd, fd_set *fdset)
 
 }
 
+void cleanup()
+{
+
+    log_close();
+}
+

@@ -19,5 +19,6 @@ void log_print(char *fname, int lineno, int priority, char *fmt, ...);
 #define LOG_MESG(priority, fmt, args...)  log_print(__FILE__, __LINE__, priority, fmt, ##args)
 
 
+void log_close();
 
 #endif // LOG_H

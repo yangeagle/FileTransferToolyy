@@ -61,4 +61,15 @@ void log_print(char *fname, int lineno, int priority, char *fmt, ...)
 }
 
 
+void log_close()
+{
+    if (!log_fp)
+    {
+        fflush(log_fp);
+        fclose(log_fp);
+        log_fp = NULL;
+    }
+}
+
+
 
