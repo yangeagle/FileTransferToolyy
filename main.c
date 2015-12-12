@@ -14,7 +14,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <errno.h>
 #include "log.h"
 #include "config.h"
 
@@ -127,6 +127,9 @@ void reset_fds(int listen_fd, fd_set *preadset, int *pmax_fd)
 int delete_fds(int fd)
 {
     int i = 0;
+
+    close(fd);
+
     for(i = 0; i < MAX_CLIENTS_NUM; ++i)
     {
         if (fd == clients[i])
@@ -177,10 +180,10 @@ int main(int argc, char *arg[])
 
         reset_fds(listen_fd, &readset, &max_fd);
 
-        nready = select(max_fd+1, &readset, NULL, NULL, NULL);
+        nready = select(max_fd + 1, &readset, NULL, NULL, NULL);
         if (nready < 0)
         {
-            LOG_MESG(EGENERAL, "select error\n");
+            LOG_MESG(EGENERAL, "select error: %s\n", strerror(errno));
         }
 
         process_request(listen_fd, &readset);
