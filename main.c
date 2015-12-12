@@ -15,7 +15,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "config_socket.h"
 #include "log.h"
 #include "config.h"
 

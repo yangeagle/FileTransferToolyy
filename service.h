@@ -8,9 +8,10 @@
 typedef enum MESG_ID
 {
     MESG_INVAL = -1,
-    MESG_UPLOAD = 0,
+    MESG_BROWSER = 0,
     MESG_DOWNLOAD,
-    MESG_BROWSER,
+    MESG_UPLOAD,
+
 
     MESG_MAX
 }TMESG_ID;
@@ -23,23 +24,40 @@ typedef enum RESULT_CODE
     RCODE_ERROR,
 
 
-
     RCODE_MAX
 }TRESULT_CODE;
 
 
+typedef struct Capsule
+{
+    int len;
+    void *content;
+
+}TCapsule;
+
 typedef struct RequestParameter
 {
     TMESG_ID msg_id;
-    int mesg_len;
-    char mesg_content[MAX_MESG_LEN];
-
+    int len;
+    void *body;
 }TRequestParam;
 
 typedef struct ResponseParameter
 {
-
-
+    TRESULT_CODE rc;
+    int len;
+    void *body;
 }TResponseParam;
+
+
+typedef TRESULT_CODE (*ServiceHandler)(TRequestParam *req, TResponseParam *resp);
+
+typedef struct
+{
+    TMESG_ID mesg_id;
+    ServiceHandler handler;
+}TMesgHandlers;
+
+
 
 #endif // SERVICE_H
