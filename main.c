@@ -17,6 +17,8 @@
 #include <errno.h>
 #include "log.h"
 #include "config.h"
+#include "common_utils.h"
+#include "clients.h"
 
 #define MAX_CLIENTS_NUM (1000)
 
@@ -158,12 +160,16 @@ int main(int argc, char *arg[])
     int listen_fd;
     fd_set readset;
 
+    LINK_LIST_HEAD(TClient) clients_head;
+    LIST_INIT(&clients_head);
+
+
+
     for (i = 0; i < MAX_CLIENTS_NUM; i++) {
         clients[i] = -1;
     }
 
     config_init(argc, arg);
-
 
     listen_fd = config_server_socket();
     if (listen_fd < 0)

@@ -3,7 +3,7 @@
 
 #include <time.h>
 #include "service.h"
-
+#include "common_utils.h"
 
 typedef struct client_capsule
 {
@@ -12,7 +12,8 @@ typedef struct client_capsule
     TResponseParam *resp;
 
     time_t timeout;
-}TClientCaps;
+    LINK_LIST_ENTRY(client_capsule) entries;
+}TClient;
 
 
 

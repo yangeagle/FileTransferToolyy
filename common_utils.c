@@ -1,16 +1,15 @@
 
+#include "common_utils.h"
 
 
 
 
-typedef struct linknode
-{
-    struct linknode *pre;
-    struct linknode *next;
-}TLinkNode;
 
+/*
+ *
+ * insert in order
 
-
+*/
 
 int link_insert(TLinkNode *headlist, TLinkNode *node)
 {
@@ -20,7 +19,8 @@ int link_insert(TLinkNode *headlist, TLinkNode *node)
     return 0;
 }
 
-int link_delete((TLinkNode *headlist, TLinkNode *node)
+
+int link_delete(TLinkNode *headlist, TLinkNode *node)
 {
 
     return 0;
