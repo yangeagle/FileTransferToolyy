@@ -159,6 +159,7 @@ int main(int argc, char *arg[])
     int i, nready, max_fd;
     int listen_fd;
     fd_set readset;
+    struct timeval timeout;
 
     LINK_LIST_HEAD(TClient) clients_head;
     LIST_INIT(&clients_head);
@@ -180,19 +181,34 @@ int main(int argc, char *arg[])
 
 
     LOG_MESG(EGENERAL,"max fd num %d\n", FD_SETSIZE);
-    LOG_MESG(EGENERAL,"File transfer tool starting...");
+    LOG_MESG(EGENERAL,"File transfer tool starting...\n");
 
     while (!quit_flag) {
 
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+
         reset_fds(listen_fd, &readset, &max_fd);
 
-        nready = select(max_fd + 1, &readset, NULL, NULL, NULL);
+        nready = select(max_fd + 1, &readset, NULL, NULL, &timeout);
         if (nready < 0)
         {
+            if (errno == EINTR)
+            {
+                continue;
+            }
+
             LOG_MESG(EGENERAL, "select error: %s\n", strerror(errno));
         }
+        else if (nready == 0)
+        {
+            LOG_MESG(EGENERAL, "select timeout.\n");
+        }
+        else if (nready > 0)
+        {
+            process_request(listen_fd, &readset);
+        }
 
-        process_request(listen_fd, &readset);
     }
 
     exit(EXIT_SUCCESS);
