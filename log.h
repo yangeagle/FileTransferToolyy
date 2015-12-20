@@ -1,5 +1,6 @@
 #ifndef LOG_H
 #define LOG_H
+#include <stdio.h>
 
 typedef enum LOG_LEVEL_TAG
 {

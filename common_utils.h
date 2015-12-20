@@ -9,6 +9,7 @@ typedef struct linknode
 }TLinkNode;
 
 
+
 #define LINK_LIST_HEAD(type) \
 struct { \
     struct type *l_first; \

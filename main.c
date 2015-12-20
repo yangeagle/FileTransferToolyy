@@ -161,7 +161,7 @@ int main(int argc, char *arg[])
     fd_set readset;
     struct timeval timeout;
 
-    LINK_LIST_HEAD(TClient) clients_head;
+    LINK_LIST_HEAD(client_capsule) clients_head;
     LIST_INIT(&clients_head);
 
 
