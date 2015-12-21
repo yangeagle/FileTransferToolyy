@@ -8,7 +8,7 @@
  *
 */
 
-int AddNewClient(TClient *first, TClient *new_client)
+int AddNewClient(TClient **first, TClient *new_client)
 {
     if (new_client == NULL)
     {
@@ -16,21 +16,58 @@ int AddNewClient(TClient *first, TClient *new_client)
         return -1;
     }
 
-    TClient *tmp = first->entries.next;
+    if (!(*first))
+    {
 
-    while(tmp != first)
+        LOG_MESG(EGENERAL, "The first request in.\n");
+        new_client->entries.pre = new_client;
+        new_client->entries.next = new_client;
+        *first = new_client;
+        return 0;
+    }
+
+    TClient *tmp = (*first)->entries.next;
+
+    if (*first == tmp)
+    {
+
+        new_client->entries.next = tmp;
+        new_client->entries.pre = tmp;
+
+        tmp->entries.next = new_client;
+        tmp->entries.pre = new_client;
+
+        if (new_client->plevel > tmp->plevel)
+        {
+
+            *first = new_client;
+        }
+
+        return 0;
+    }
+
+
+    while(*first != tmp)
     {
         if (new_client->plevel > tmp->plevel)
         {
+
+            new_client->entries.next = tmp;
+            new_client->entries.pre = tmp->entries.pre;
+
+            tmp->entries.pre = new_client;
 
             return 0;
         }
         tmp = tmp->entries.next;
     }
 
+    new_client->entries.next = tmp;
+    new_client->entries.pre = tmp->entries.pre;
 
+    tmp->entries.pre = new_client;
 
-    return -1;
+    return 0;
 }
 
 
