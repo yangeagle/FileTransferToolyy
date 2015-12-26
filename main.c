@@ -1,9 +1,15 @@
 /*
-*File Transfer tools
-* Author:ZYY
-* date:2015-11-03
-*
-*
+ * File Transfer tools project
+ *
+ *
+ * File Transfer tools
+ * Copyright Reserved  Yangeagle
+ *
+ * This file is part of File Transfer tools.
+ *
+ * File Transfer tools is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
 */
 
 #include <stdio.h>
@@ -73,12 +79,14 @@ void config_init(int argc, char *arg[])
 
 
 /*
- *add new fd info clients sets
+ *
+ * add new fd info clients sets
  *
  *
 */
 int add_new_fd(int fd)
 {
+    LOG_MESG(EGENERAL, "add_new_fd()");
     if (fd < 0)
     {
         LOG_MESG(EWARN, "Invalid file descriptor.\n");
@@ -102,7 +110,7 @@ int add_new_fd(int fd)
 }
 
 
-void reset_fds(int listen_fd, fd_set *preadset, int *pmax_fd)
+void reset_fds(int listen_fd, const TClient *first, fd_set *preadset, int *pmax_fd)
 {
     int i = 0;
     FD_ZERO(preadset);
@@ -110,15 +118,21 @@ void reset_fds(int listen_fd, fd_set *preadset, int *pmax_fd)
     FD_SET(listen_fd, preadset);
     *pmax_fd = listen_fd;
 
-    for (i = 0; i < MAX_CLIENTS_NUM; ++i) {
-        if (clients[i] >= 0) {
-            FD_SET(clients[i], preadset);
-            if (*pmax_fd < clients[i])
+    TClient *tmp = first;
+
+    do {
+        if (tmp->socket >= 0)
+        {
+            FD_SET(tmp->socket, preadset);
+
+            if (*pmax_fd < tmp->socket)
             {
-                *pmax_fd = clients[i];
+                *pmax_fd = tmp->socket;
             }
         }
-    }
+
+        tmp = tmp->entries.next;
+    }while(tmp != first);
 }
 
 /*
@@ -151,7 +165,8 @@ int delete_fds(int fd)
     return 0;
 }
 
-/*===============main===============
+/*
+ * ===============main===============
  *
 */
 int main(int argc, char *arg[])
@@ -163,12 +178,6 @@ int main(int argc, char *arg[])
 
     LINK_LIST_HEAD(client_capsule) clients_head;
     LIST_INIT(&clients_head);
-
-
-
-    for (i = 0; i < MAX_CLIENTS_NUM; i++) {
-        clients[i] = -1;
-    }
 
     config_init(argc, arg);
 
@@ -188,7 +197,7 @@ int main(int argc, char *arg[])
         timeout.tv_sec = 10;
         timeout.tv_usec = 0;
 
-        reset_fds(listen_fd, &readset, &max_fd);
+        reset_fds(listen_fd, clients_head.l_first, &readset, &max_fd);
 
         nready = select(max_fd + 1, &readset, NULL, NULL, &timeout);
         if (nready < 0)
@@ -226,11 +235,10 @@ int  process_request(int listen_fd, fd_set *fdset)
     if (FD_ISSET(listen_fd, fdset)) {
         int conn_fd = accept(listen_fd, (struct sockaddr *)&addr_client, &client_size);
         if (conn_fd < 0) {
-            LOG_MESG(EERROR, "accept failed");
-            return -1;
+            LOG_MESG(EERROR, "Accept failed");
         }
 
-        LOG_MESG(EGENERAL, "connection from client:%s port:%d.\n", inet_ntoa(addr_client.sin_addr), ntohs(addr_client.sin_port));
+        LOG_MESG(EGENERAL, "Connection from client:%s port:%d.\n", inet_ntoa(addr_client.sin_addr), ntohs(addr_client.sin_port));
 
         add_new_fd(conn_fd);
     }
