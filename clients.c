@@ -3,19 +3,33 @@
 #include "common_utils.h"
 #include "log.h"
 
+
 /*
- *Add new client
+ *
+ * Add new client
  *
 */
-
-int AddNewClient(TClient **first, TClient *new_client)
+int AddNewClient(TClient **first, int fd)
 {
-    if (new_client == NULL)
+    LOG_MESG(EGENERAL, "AddNewClient(%d)\n", fd);
+    if (fd < 0)
     {
-        LOG_MESG(EERROR, "TClient pointer is NULL.\n");
+        LOG_MESG(EWARN, "Invalid file descriptor.\n");
         return -1;
     }
 
+    TClient *new_client = (TClient *)malloc(sizeof(TClient));
+    if (!new_client)
+    {
+        LOG_MESG(EERROR, "Mem malloc failed:%s.\n", strerror(errno));
+        return -1;
+    }
+
+    new_client->socket = fd;
+    new_client->timeout = time();
+    new_client->plevel = PRI_NORMAL;
+
+    /*the first one*/
     if (!(*first))
     {
 
@@ -26,6 +40,7 @@ int AddNewClient(TClient **first, TClient *new_client)
         return 0;
     }
 
+    /*insert into link list according to the priority*/
     TClient *tmp = *first;
 
     do {
@@ -46,7 +61,8 @@ int AddNewClient(TClient **first, TClient *new_client)
         tmp = tmp->entries.next;
     }while(tmp != *first);
 
-    /*the last one*/
+    /*the minimum priority level*/
+    /*insert at the end of the link list*/
     if (tmp == first)
     {
         new_client->entries.next = tmp;
@@ -55,17 +71,15 @@ int AddNewClient(TClient **first, TClient *new_client)
         tmp->entries.pre = new_client;
     }
 
-
-
     return 0;
 }
 
 
 /*
- *Remove client
+ *
+ * Remove client
  *
 */
-
 int RemoveClient(TClient **first, TClient *remove_client)
 {
 
@@ -92,7 +106,6 @@ int RemoveClient(TClient **first, TClient *remove_client)
         *first = next;
     }
 
-
     pre->entries.next = next;
     next->entries.pre = pre;
 
@@ -103,9 +116,20 @@ int RemoveClient(TClient **first, TClient *remove_client)
 
 
 
-int DeleteClient(TClient *client)
+static int DeleteClient(TClient *client)
 {
-    LOG_MESG(EGENERAL, "DeleteCient() Enter.\n");
+    LOG_MESG(EGENERAL, "DeleteClient() Enter.\n");
+    if (!client)
+    {
+        LOG_MESG(EWARN, "Invalid client.\n");
+        return -1;
+    }
+
+    if (client->socket >= 0)
+    {
+        close(client->socket);
+        client->socket = -1;
+    }
 
     if (client->req)
     {
@@ -124,3 +148,43 @@ int DeleteClient(TClient *client)
     return 0;
 }
 
+/*
+ * Delete all clients.
+ *
+*/
+int DeleteClients(TClient **first)
+{
+    TClient *tmp = *first;
+    do {
+        DeleteClient(tmp);
+        tmp = tmp->entries.next;
+    }while(tmp != *first);
+
+    /*Delete the first node in the end*/
+    DeleteClient(*first);
+    *first = NULL;
+    return 0;
+}
+
+/*
+ * Check client active or inactive during the interval time
+ *
+ * parameter:
+ * interval in seconds
+*/
+int CheckActivity(TClient **first, int interval)
+{
+    TClient *tmp = *first;
+    time_t current = time();
+    do {
+
+        if (current > tmp->timeout + interval)
+        {
+            RemoveClient(first, tmp);
+        }
+
+        tmp = tmp->entries.next;
+    }while(tmp != *first && *first);
+
+    return 0;
+}

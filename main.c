@@ -26,9 +26,8 @@
 #include "common_utils.h"
 #include "clients.h"
 
-#define MAX_CLIENTS_NUM (1000)
+#define CHECK_INTERVAL  (30)
 
-int clients[MAX_CLIENTS_NUM];
 
 int quit_flag = 0;
 
@@ -77,37 +76,6 @@ void config_init(int argc, char *arg[])
     read_config_file();
 }
 
-
-/*
- *
- * add new fd info clients sets
- *
- *
-*/
-int add_new_fd(int fd)
-{
-    LOG_MESG(EGENERAL, "add_new_fd()");
-    if (fd < 0)
-    {
-        LOG_MESG(EWARN, "Invalid file descriptor.\n");
-        return -1;
-    }
-
-    int i = 0;
-
-    for(i = 0; i < MAX_CLIENTS_NUM; ++i)
-    {
-        if (-1 == clients[i])
-        {
-            clients[i] = fd;
-            return 0;
-        }
-    }
-
-    LOG_MESG(EWARN, "Too many clients.\n");
-
-    return -1;
-}
 
 
 void reset_fds(int listen_fd, const TClient *first, fd_set *preadset, int *pmax_fd)
@@ -188,7 +156,6 @@ int main(int argc, char *arg[])
         return -1;
     }
 
-
     LOG_MESG(EGENERAL,"max fd num %d\n", FD_SETSIZE);
     LOG_MESG(EGENERAL,"File transfer tool starting...\n");
 
@@ -215,16 +182,20 @@ int main(int argc, char *arg[])
         }
         else if (nready > 0)
         {
-            process_request(listen_fd, &readset);
+            process_request(listen_fd, clients_head.l_first, &readset);
         }
 
+        /*Check time out*/
+        CheckActivity(&(clients_head.l_first), CHECK_INTERVAL);
     }
 
+    DeleteClients(&(clients_head.l_first));
+    cleanup();
     exit(EXIT_SUCCESS);
     return 0;
 }
 
-int  process_request(int listen_fd, fd_set *fdset)
+int process_request(int listen_fd, TClient *first, fd_set *fdset)
 {
     char recv_buf[1024];
     char send_buf[1024];
@@ -232,15 +203,33 @@ int  process_request(int listen_fd, fd_set *fdset)
     socklen_t client_size;
     struct sockaddr_in addr_client;
 
+    /*listen fd*/
     if (FD_ISSET(listen_fd, fdset)) {
         int conn_fd = accept(listen_fd, (struct sockaddr *)&addr_client, &client_size);
         if (conn_fd < 0) {
             LOG_MESG(EERROR, "Accept failed");
         }
+        else
+        {
+            LOG_MESG(EGENERAL, "Connection from client:%s port:%d.\n", inet_ntoa(addr_client.sin_addr), ntohs(addr_client.sin_port));
 
-        LOG_MESG(EGENERAL, "Connection from client:%s port:%d.\n", inet_ntoa(addr_client.sin_addr), ntohs(addr_client.sin_port));
+            AddNewClient(&first, conn_fd);
+        }
+    }
 
-        add_new_fd(conn_fd);
+    if (first)
+    {
+        TClient *tmp = first;
+        do {
+
+            if (FD_ISSET(tmp->socket, fdset))
+            {
+
+            }
+
+            tmp = tmp->entries.next;
+        }while(tmp != first);
+
     }
 
     for (i = 0; i < MAX_CLIENTS_NUM; ++i) {

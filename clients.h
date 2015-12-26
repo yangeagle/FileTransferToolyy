@@ -30,6 +30,10 @@ typedef struct client_capsule
 
 
 
+int AddNewClient(TClient **first, int fd);
 
+int CheckActivity(TClient **first, int interval);
+
+int DeleteClients(TClient **first);
 
 #endif // CLIENTS_H

@@ -6,6 +6,8 @@
 */
 
 #include "service.h"
+#include "clients.h"
+
 
 TRESULT_CODE browser_handler(TRequestParam *req, TResponseParam *resp);
 TRESULT_CODE download_handler(TRequestParam *req, TResponseParam *resp);
@@ -51,7 +53,17 @@ TRESULT_CODE upload_handler(TRequestParam *req, TResponseParam *resp)
 
 }
 
+int compack_request()
+{
 
+    return 0;
+}
+
+int response_back(TClient *client)
+{
+
+    return 0;
+}
 
 TRESULT_CODE dispatch_command(TRequestParam *req, TResponseParam *resp)
 {
@@ -62,10 +74,14 @@ TRESULT_CODE dispatch_command(TRequestParam *req, TResponseParam *resp)
         if (req->msg_id == methods[i].mesg_id)
         {
             rc = (methods[i].handler)(req, resp);
+
+            /*response to client*/
             return rc;
         }
     }
 
-    return RCODE_ERROR;
+    return rc;
 }
+
+
 
