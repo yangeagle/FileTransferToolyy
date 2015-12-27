@@ -80,13 +80,12 @@ void config_init(int argc, char *arg[])
 
 void reset_fds(int listen_fd, const TClient *first, fd_set *preadset, int *pmax_fd)
 {
-    int i = 0;
     FD_ZERO(preadset);
 
     FD_SET(listen_fd, preadset);
     *pmax_fd = listen_fd;
 
-    TClient *tmp = first;
+    const TClient *tmp = first;
 
     do {
         if (tmp->socket >= 0)
@@ -103,35 +102,49 @@ void reset_fds(int listen_fd, const TClient *first, fd_set *preadset, int *pmax_
     }while(tmp != first);
 }
 
-/*
- *delete unuse fd from clients sets
- *
- *
-*/
-int delete_fds(int fd)
+
+void process_request(int listen_fd, TClient *first, fd_set *fdset)
 {
-    int i = 0;
+    socklen_t client_size;
+    struct sockaddr_in addr_client;
 
-    close(fd);
-
-    for(i = 0; i < MAX_CLIENTS_NUM; ++i)
-    {
-        if (fd == clients[i])
+    /*listen fd*/
+    if (FD_ISSET(listen_fd, fdset)) {
+        int conn_fd = accept(listen_fd, (struct sockaddr *)&addr_client, &client_size);
+        if (conn_fd < 0) {
+            LOG_MESG(EERROR, "Accept failed");
+        }
+        else
         {
-            clients[i] = -1;
-            break;
+            LOG_MESG(EGENERAL, "Connection from client:%s port:%d.\n", inet_ntoa(addr_client.sin_addr), ntohs(addr_client.sin_port));
+
+            AddNewClient(&first, conn_fd);
         }
     }
 
-    if (i == MAX_CLIENTS_NUM)
+    if (first)
     {
+        TClient *tmp = first;
+        do {
 
-        LOG_MESG(EWARN, "fd not found\n");
-        return -1;
+            if (FD_ISSET(tmp->socket, fdset))
+            {
+
+            }
+
+            tmp = tmp->entries.next;
+        }while(tmp != first);
+
     }
 
-    return 0;
 }
+
+void cleanup()
+{
+
+    log_close();
+}
+
 
 /*
  * ===============main===============
@@ -139,7 +152,7 @@ int delete_fds(int fd)
 */
 int main(int argc, char *arg[])
 {
-    int i, nready, max_fd;
+    int nready, max_fd;
     int listen_fd;
     fd_set readset;
     struct timeval timeout;
@@ -195,65 +208,5 @@ int main(int argc, char *arg[])
     return 0;
 }
 
-int process_request(int listen_fd, TClient *first, fd_set *fdset)
-{
-    char recv_buf[1024];
-    char send_buf[1024];
-    int i, len;
-    socklen_t client_size;
-    struct sockaddr_in addr_client;
 
-    /*listen fd*/
-    if (FD_ISSET(listen_fd, fdset)) {
-        int conn_fd = accept(listen_fd, (struct sockaddr *)&addr_client, &client_size);
-        if (conn_fd < 0) {
-            LOG_MESG(EERROR, "Accept failed");
-        }
-        else
-        {
-            LOG_MESG(EGENERAL, "Connection from client:%s port:%d.\n", inet_ntoa(addr_client.sin_addr), ntohs(addr_client.sin_port));
-
-            AddNewClient(&first, conn_fd);
-        }
-    }
-
-    if (first)
-    {
-        TClient *tmp = first;
-        do {
-
-            if (FD_ISSET(tmp->socket, fdset))
-            {
-
-            }
-
-            tmp = tmp->entries.next;
-        }while(tmp != first);
-
-    }
-
-    for (i = 0; i < MAX_CLIENTS_NUM; ++i) {
-        if (FD_ISSET(clients[i], fdset)) {
-            len = recv(clients[i], recv_buf, sizeof(recv_buf) - 1, 0);
-            if (len <= 0) {
-                clients[i] = -1;
-            }
-
-            recv_buf[len] = '\0';
-            memset(send_buf,0,sizeof(send_buf));
-            sprintf(send_buf, "server proc got %d bytes\n", len);
-            len = send(clients[i], send_buf, strlen(send_buf), 0);
-            if (len <= 0) {
-                clients[i] = -1;
-            }
-        }
-    }
-
-}
-
-void cleanup()
-{
-
-    log_close();
-}
 

@@ -20,8 +20,8 @@ typedef enum request_priority
 typedef struct client_capsule
 {
     int socket;
-    TRequestParam *req;
-    TResponseParam *resp;
+    TRequestParam req;
+    TResponseParam resp;
 
     PriorityLevel plevel;
     time_t timeout;

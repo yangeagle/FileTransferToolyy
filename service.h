@@ -1,7 +1,7 @@
 #ifndef SERVICE_H
 #define SERVICE_H
 
-#define  MAX_MESG_LEN   (512)
+#define  MAX_MESG_LEN   (1024)
 
 
 
@@ -27,25 +27,29 @@ typedef enum RESULT_CODE
     RCODE_MAX
 }TRESULT_CODE;
 
-
-typedef struct Capsule
+struct req_header
 {
-    int len;
-    void *content;
-
-}TCapsule;
+    TMESG_ID msg_id;
+    int body_len;
+};
 
 typedef struct RequestParameter
 {
-    TMESG_ID msg_id;
-    int len;
+    struct req_header header;
     void *body;
 }TRequestParam;
 
+
+struct resp_header
+{
+    TMESG_ID msg_id;
+    TRESULT_CODE rc;
+    int body_len;
+};
+
 typedef struct ResponseParameter
 {
-    TRESULT_CODE rc;
-    int len;
+    struct resp_header header;
     void *body;
 }TResponseParam;
 
