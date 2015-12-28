@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include "service.h"
 #include "clients.h"
 #include "log.h"
@@ -91,12 +92,41 @@ int compact_request(TClient *client)
     if (body_len > 0)
     {
         total = 0;
+        int malloc_realloc = 0;
+
+        void *ptr = client->req.body;
 
         do {
             memset(buffer, 0, buf_len);
             len = recv(client->socket, buffer, buf_len, 0);
             if (len > 0)
-            {}
+            {
+                total += len;
+                if (!malloc_realloc)
+                {
+                    ptr = malloc(len);
+                    if (!ptr)
+                    {
+                        LOG_MESG(EERROR, "malloc failed: %d\n", errno);
+                        return -1;
+                    }
+
+                    memset(ptr, 0, len);
+                    memcpy(ptr, buffer, len);
+
+                    malloc_realloc = 1;
+                }
+                else
+                {
+                    ptr = realloc(ptr, total);
+                    if (!ptr)
+                    {
+                        LOG_MESG(EERROR, "malloc failed: %d\n", errno);
+                        return -1;
+                    }
+                }
+
+            }
             else if (len == 0)
             {
                 LOG_MESG(EERROR, "Connection break unexpectedly:%s.\n", strerror(errno));
@@ -109,18 +139,68 @@ int compact_request(TClient *client)
                 {
                     continue;
                 }
+                LOG_MESG(EERROR, "Recv failed:%d\n", errno);
+                return -1;
             }
 
-        }
-        while(total < body_len);
+        }while(total < body_len);
     }
 
     return 0;
 }
 
+
+/*
+ *
+ * send back to client
+*/
 int response_back(const TClient *client)
 {
-    /*send back to client*/
+    int ret = -1;
+    struct resp_header header = client->resp.header;
+    /*send header first*/
+    ret = send(client->socket, (void *)(&header), sizeof(header), 0);
+    if (ret != sizeof(header))
+    {
+        LOG_MESG(EERROR, "Send result unexpectedly.\n");
+        return -1;
+    }
+
+    int total = header.body_len;
+    int len  = 0;
+    if (total > 0)
+    {
+        void *ptr = client->resp.body;
+        if (!ptr)
+        {
+            LOG_MESG(EERROR, "Invalid response body pointer.\n");
+            return -1;
+        }
+
+        do {
+            int sent = send(client->socket, ptr + len, total - len, 0);
+            if (sent > 0)
+            {
+                len += sent;
+            }
+            else if (len == 0)
+            {
+                LOG_MESG(EERROR, "Connection break unexpectedly:%s.\n", strerror(errno));
+                /*process clean up free */
+                return -1;
+            }
+            else
+            {
+                if (errno == EINTR)
+                {
+                    continue;
+                }
+                LOG_MESG(EERROR, "Send failed:%d\n", errno);
+                return -1;
+            }
+
+        }while(len < total);
+    }
 
     return 0;
 }
