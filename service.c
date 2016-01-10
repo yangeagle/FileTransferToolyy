@@ -155,6 +155,20 @@ int compact_request(TClient *client)
     return 0;
 }
 
+/*
+ * receive request version 2
+ *
+ * http
+ *
+ *
+*/
+int compact_request_v2(TClient *client)
+{
+
+    /*first recv header*/
+
+    /*then body*/
+}
 
 /*
  *

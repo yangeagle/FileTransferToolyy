@@ -129,7 +129,7 @@ void process_request(int listen_fd, TClient *first, fd_set *fdset)
 
             if (FD_ISSET(tmp->socket, fdset))
             {
-
+                compact_request_v2(tmp);
             }
 
             tmp = tmp->entries.next;

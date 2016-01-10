@@ -64,4 +64,7 @@ typedef struct
 
 
 
+int compact_request_v2(TClient *client);
+
+
 #endif // SERVICE_H
