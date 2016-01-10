@@ -53,4 +53,5 @@ struct { \
 
 
 
+extern int quit_flag;
 #endif // COMMON_UTILS_H

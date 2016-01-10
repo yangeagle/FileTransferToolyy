@@ -57,6 +57,12 @@ TRESULT_CODE upload_handler(TRequestParam *req, TResponseParam *resp)
 
 }
 
+/*
+ * receive request and
+ *
+ *
+ *
+*/
 int compact_request(TClient *client)
 {
     char buffer[512] = {0};

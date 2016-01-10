@@ -1,4 +1,5 @@
 
+#include <errno.h>
 #include "clients.h"
 #include "common_utils.h"
 #include "log.h"
@@ -21,12 +22,12 @@ int AddNewClient(TClient **first, int fd)
     TClient *new_client = (TClient *)malloc(sizeof(TClient));
     if (!new_client)
     {
-        LOG_MESG(EERROR, "Mem malloc failed:%s.\n", strerror(errno));
+        LOG_MESG(EERROR, "Mem malloc failed:%d.\n", errno);
         return -1;
     }
 
     new_client->socket = fd;
-    new_client->timeout = time();
+    new_client->timeout = time(NULL);
     new_client->plevel = PRI_NORMAL;
 
     /*the first one*/
@@ -75,6 +76,39 @@ int AddNewClient(TClient **first, int fd)
 }
 
 
+static int DeleteClient(TClient *client)
+{
+    LOG_MESG(EGENERAL, "DeleteClient() Enter.\n");
+    if (!client)
+    {
+        LOG_MESG(EWARN, "Invalid client.\n");
+        return -1;
+    }
+
+    if (client->socket >= 0)
+    {
+        close(client->socket);
+        client->socket = -1;
+    }
+
+//    if (client->req)
+//    {
+//        free(client->req);
+//        client->req = NULL;
+//    }
+
+//    if (client->resp)
+//    {
+//        free(client->resp);
+//        client->resp = NULL;
+//    }
+
+    free(client);
+
+    return 0;
+}
+
+
 /*
  *
  * Remove client
@@ -116,38 +150,6 @@ int RemoveClient(TClient **first, TClient *remove_client)
 
 
 
-static int DeleteClient(TClient *client)
-{
-    LOG_MESG(EGENERAL, "DeleteClient() Enter.\n");
-    if (!client)
-    {
-        LOG_MESG(EWARN, "Invalid client.\n");
-        return -1;
-    }
-
-    if (client->socket >= 0)
-    {
-        close(client->socket);
-        client->socket = -1;
-    }
-
-    if (client->req)
-    {
-        free(client->req);
-        client->req = NULL;
-    }
-
-    if (client->resp)
-    {
-        free(client->resp);
-        client->resp = NULL;
-    }
-
-    free(client);
-
-    return 0;
-}
-
 /*
  * Delete all clients.
  *
@@ -175,7 +177,7 @@ int DeleteClients(TClient **first)
 int CheckActivity(TClient **first, int interval)
 {
     TClient *tmp = *first;
-    time_t current = time();
+    time_t current = time(NULL);
     do {
 
         if (current > tmp->timeout + interval)

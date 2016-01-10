@@ -49,6 +49,8 @@ void log_print(char *fname, int lineno, int priority, char *fmt, ...)
     gettimeofday(&tv, NULL);
 
     localtime_r(&(tv.tv_sec), &time_tm); //get local time
+
+    flockfile(log_fp);/*for one thread do series of I/O actions together*/
     fprintf (log_fp, "%d-%02d-%02d ", (1900 + time_tm.tm_year), (1 + time_tm.tm_mon), time_tm.tm_mday);
     fprintf(log_fp, "%02d:%02d:%02d %lu: [%s:%d] ", time_tm.tm_hour, time_tm.tm_min, time_tm.tm_sec, tv.tv_usec, fname, lineno);
 
@@ -58,6 +60,7 @@ void log_print(char *fname, int lineno, int priority, char *fmt, ...)
     va_end(ap);
 
     fflush(log_fp);
+    funlockfile(log_fp);
 }
 
 
